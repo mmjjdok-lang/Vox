@@ -1692,3 +1692,19 @@ local function PlayIntro(accent)
     end)
     finished.Event:Wait()
 end
+
+-- أضف هذه الدوال الفارغة في ملف المكتبة لتجنب خطأ البحث عن الإعدادات
+function Library:LoadAutoConfig()
+    -- دالة فارغة لتجنب الخطأ
+end
+
+function Library:SaveAutoConfig()
+    -- دالة فارغة لتجنب الخطأ
+end
+
+function Library:ConfigManager()
+    -- دالة فارغة لتجنب الخطأ
+end
+
+
+return Library
