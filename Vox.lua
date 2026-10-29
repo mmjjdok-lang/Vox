@@ -1692,6 +1692,3 @@ local function PlayIntro(accent)
     end)
     finished.Event:Wait()
 end
-
-
-Window:LoadAutoConfig()
