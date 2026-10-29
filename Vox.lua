@@ -6,6 +6,10 @@
       Optional mini button | Heartbeat floating toggle | Opaque tabs + tab animations
       Note / Label / Tag systems | Config saving (Flags) | Player card (bottom-left)
       Top buttons: Hide / Collapse-to-title / X with legendary confirmation
+
+    Update:
+      Higher contrast (tabs frame, elements, window)
+      Floating button has no X; the mini + button toggles it (+ add / - remove)
 ]]
 if not game:IsLoaded() then game.Loaded:Wait() end
 
@@ -534,12 +538,13 @@ function Library:CreateWindow(cfg)
         col = Library.ResolveColor(col)
         T.Accent = col
         T.Light = col:Lerp(WHITE, 0.35)
-        T.Dark = col:Lerp(BLACK, 0.92)
-        T.Deep = col:Lerp(BLACK, 0.95)
-        T.Mid = col:Lerp(BLACK, 0.85)
-        T.Elem = col:Lerp(BLACK, 0.78)
-        T.Text = Color3.fromRGB(240, 245, 242)
-        T.Sub = Color3.fromRGB(150, 160, 155)
+        local h, s = col:ToHSV()
+        T.Dark = Color3.fromHSV(h, s * 0.7, 0.30)
+        T.Deep = Color3.fromHSV(h, s * 0.75, 0.42)   -- tabs frame (solid, clearly visible)
+        T.Mid = Color3.fromHSV(h, s * 0.7, 0.36)
+        T.Elem = Color3.fromHSV(h, s * 0.65, 0.50)
+        T.Text = Color3.fromRGB(250, 252, 251)
+        T.Sub = Color3.fromRGB(215, 222, 218)
     end
     SetT(cfg.Color)
     Library.Accent = T.Accent
@@ -569,7 +574,7 @@ function Library:CreateWindow(cfg)
     WConn(RS.RenderStepped, function() bgrad.Rotation = (os.clock() * 50) % 360 end)
 
     -- Main (CanvasGroup => rounded clipping + fade)
-    local Main = New("CanvasGroup", {Name = "Main", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.new(1, -3, 1, -3), BackgroundColor3 = WHITE, BackgroundTransparency = cfg.Transparency or 0.15, ZIndex = 6, Parent = Holder})
+    local Main = New("CanvasGroup", {Name = "Main", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.new(1, -3, 1, -3), BackgroundColor3 = WHITE, BackgroundTransparency = cfg.Transparency or 0.05, ZIndex = 6, Parent = Holder})
     Corner(Main, 13)
     local MainScale = New("UIScale", {Scale = 0.6, Parent = Main})
     local mgrad = New("UIGradient", {Rotation = 45, Parent = Main})
@@ -619,7 +624,7 @@ function Library:CreateWindow(cfg)
     -- Sidebar (opaque) + content
     local side = New("Frame", {Position = UDim2.fromOffset(8, 52), Size = UDim2.new(0, 130, 1, -60), BackgroundColor3 = T.Deep, BackgroundTransparency = 0, BorderSizePixel = 0, ClipsDescendants = true, ZIndex = 3, Parent = Body})
     Corner(side, 10)
-    local sst = New("UIStroke", {Color = T.Accent, Thickness = 1, Transparency = 0.7, Parent = side})
+    local sst = New("UIStroke", {Color = T.Accent, Thickness = 2, Transparency = 0.15, Parent = side})
     Reg(function() side.BackgroundColor3 = T.Deep sst.Color = T.Accent end)
     local selector = New("Frame", {Position = UDim2.fromOffset(6, 6), Size = UDim2.new(1, -12, 0, 34), BackgroundColor3 = T.Accent, BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 1, Parent = side})
     Corner(selector, 8)
@@ -634,7 +639,7 @@ function Library:CreateWindow(cfg)
     -- Player card (bottom-left)
     local profile = New("Frame", {AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 6, 1, -6), Size = UDim2.new(1, -12, 0, 42), BackgroundColor3 = T.Elem, BorderSizePixel = 0, ZIndex = 4, Parent = side})
     Corner(profile, 10)
-    local pfs = New("UIStroke", {Color = T.Accent, Thickness = 1, Transparency = 0.6, Parent = profile})
+    local pfs = New("UIStroke", {Color = T.Accent, Thickness = 1, Transparency = 0.4, Parent = profile})
     Reg(function() profile.BackgroundColor3 = T.Elem pfs.Color = T.Accent end)
     local avatar = New("ImageLabel", {Position = UDim2.fromOffset(6, 5), Size = UDim2.fromOffset(32, 32), BackgroundColor3 = T.Dark, Image = "", ImageTransparency = 1, ZIndex = 5, Parent = profile})
     Corner(avatar, 999)
@@ -948,7 +953,7 @@ function Library:CreateWindow(cfg)
     local function MakeSlider(holder, min, max, def, inc, cb, label, lockScroll)
         min, max, inc = min or 0, max or 100, inc or 1
         local value = math.clamp(def or min, min, max)
-        local track = New("Frame", {AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.fromScale(0, 0.5), Size = UDim2.new(1, 0, 0, 6), BackgroundColor3 = WHITE, BackgroundTransparency = 0.88, BorderSizePixel = 0, Parent = holder})
+        local track = New("Frame", {AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.fromScale(0, 0.5), Size = UDim2.new(1, 0, 0, 6), BackgroundColor3 = WHITE, BackgroundTransparency = 0.75, BorderSizePixel = 0, Parent = holder})
         Corner(track, 3)
         local fill = New("Frame", {Size = UDim2.fromScale(0, 1), BackgroundColor3 = T.Accent, BorderSizePixel = 0, Parent = track})
         Corner(fill, 3)
@@ -1017,11 +1022,11 @@ function Library:CreateWindow(cfg)
         Corner(prev, 6)
         Stroke(prev, WHITE, 1, 0.7)
         local function mkBox(x, w, ph)
-            local b = New("TextBox", {Position = UDim2.fromOffset(x, 164), Size = UDim2.fromOffset(w, 28), BackgroundColor3 = T.Elem, BackgroundTransparency = 0.3, PlaceholderText = ph, Text = "", TextColor3 = T.Text, PlaceholderColor3 = T.Sub, Font = Font.GothamMedium, TextSize = 12, ClearTextOnFocus = false, Parent = panel})
+            local b = New("TextBox", {Position = UDim2.fromOffset(x, 164), Size = UDim2.fromOffset(w, 28), BackgroundColor3 = T.Elem, BackgroundTransparency = 0.15, PlaceholderText = ph, Text = "", TextColor3 = T.Text, PlaceholderColor3 = T.Sub, Font = Font.GothamMedium, TextSize = 12, ClearTextOnFocus = false, Parent = panel})
             Corner(b, 6)
-            local st = Stroke(b, T.Accent, 1, 0.6)
+            local st = Stroke(b, T.Accent, 1, 0.4)
             b.Focused:Connect(function() Tween(st, 0.2, {Transparency = 0}) end)
-            b.FocusLost:Connect(function() Tween(st, 0.2, {Transparency = 0.6}) end)
+            b.FocusLost:Connect(function() Tween(st, 0.2, {Transparency = 0.4}) end)
             return b
         end
         local hex, rB, gB, bB = mkBox(48, 80, "#HEX"), mkBox(134, 36, "R"), mkBox(174, 36, "G"), mkBox(214, 36, "B")
@@ -1051,7 +1056,7 @@ function Library:CreateWindow(cfg)
         rB.FocusLost:Connect(rgbChanged) gB.FocusLost:Connect(rgbChanged) bB.FocusLost:Connect(rgbChanged)
 
         local function pbtn(text, x, w, filled, fn)
-            local b = New("TextButton", {Position = UDim2.fromOffset(x, 204), Size = UDim2.fromOffset(w, 32), BackgroundColor3 = T.Accent, BackgroundTransparency = filled and 0.1 or 0.85, Text = text, Font = Font.GothamBold, TextSize = 13, TextColor3 = filled and BLACK or T.Accent, AutoButtonColor = false, Parent = panel})
+            local b = New("TextButton", {Position = UDim2.fromOffset(x, 204), Size = UDim2.fromOffset(w, 32), BackgroundColor3 = T.Accent, BackgroundTransparency = filled and 0.1 or 0.75, Text = text, Font = Font.GothamBold, TextSize = 13, TextColor3 = filled and BLACK or T.Text, AutoButtonColor = false, Parent = panel})
             Corner(b, 8)
             Stroke(b, T.Accent, 1.2, 0.3)
             local bs = New("UIScale", {Parent = b})
@@ -1066,14 +1071,14 @@ function Library:CreateWindow(cfg)
 
     local function OpenFloatPanel(info)
         local panel, close = OpenPopup(290, 262)
-        local opts = {Name = info.Name, Size = 56, Transparency = 0.3, Color = T.Accent}
+        local opts = {Name = info.Name, Size = 56, Transparency = 0.1, Color = T.Accent}
         PLabel(panel, info.Toggle and "Floating Toggle" or "Floating Button", 14, 10, 262, 20, Left, 14, T.Text, Font.GothamBlack)
         PLabel(panel, "Name", 14, 40, 60, 28, Left, 12, T.Sub)
-        local nb = New("TextBox", {Position = UDim2.fromOffset(74, 40), Size = UDim2.fromOffset(200, 28), BackgroundColor3 = T.Elem, BackgroundTransparency = 0.3, Text = opts.Name, PlaceholderText = "Button name", TextColor3 = T.Text, PlaceholderColor3 = T.Sub, Font = Font.GothamMedium, TextSize = 12, ClearTextOnFocus = false, Parent = panel})
+        local nb = New("TextBox", {Position = UDim2.fromOffset(74, 40), Size = UDim2.fromOffset(200, 28), BackgroundColor3 = T.Elem, BackgroundTransparency = 0.15, Text = opts.Name, PlaceholderText = "Button name", TextColor3 = T.Text, PlaceholderColor3 = T.Sub, Font = Font.GothamMedium, TextSize = 12, ClearTextOnFocus = false, Parent = panel})
         Corner(nb, 6)
-        local nst = Stroke(nb, T.Accent, 1, 0.6)
+        local nst = Stroke(nb, T.Accent, 1, 0.4)
         nb.Focused:Connect(function() Tween(nst, 0.2, {Transparency = 0}) end)
-        nb.FocusLost:Connect(function() Tween(nst, 0.2, {Transparency = 0.6}) opts.Name = nb.Text ~= "" and nb.Text or info.Name end)
+        nb.FocusLost:Connect(function() Tween(nst, 0.2, {Transparency = 0.4}) opts.Name = nb.Text ~= "" and nb.Text or info.Name end)
 
         PLabel(panel, "Size", 14, 80, 60, 18, Left, 12, T.Sub)
         local sl1 = PLabel(panel, "56", 214, 80, 60, 18, Right, 12, T.Accent)
@@ -1081,9 +1086,9 @@ function Library:CreateWindow(cfg)
         MakeSlider(h1, 30, 120, 56, 1, function(v) opts.Size = v end, sl1)
 
         PLabel(panel, "Transparency", 14, 124, 120, 18, Left, 12, T.Sub)
-        local sl2 = PLabel(panel, "0.3", 214, 124, 60, 18, Right, 12, T.Accent)
+        local sl2 = PLabel(panel, "0.1", 214, 124, 60, 18, Right, 12, T.Accent)
         local h2 = New("Frame", {Position = UDim2.fromOffset(14, 144), Size = UDim2.fromOffset(262, 18), BackgroundTransparency = 1, Parent = panel})
-        MakeSlider(h2, 0, 0.9, 0.3, 0.05, function(v) opts.Transparency = v end, sl2)
+        MakeSlider(h2, 0, 0.9, 0.1, 0.05, function(v) opts.Transparency = v end, sl2)
 
         PLabel(panel, "Border Color", 14, 172, 120, 24, Left, 12, T.Sub)
         local sw = New("TextButton", {AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromOffset(276, 172), Size = UDim2.fromOffset(60, 24), BackgroundColor3 = opts.Color, Text = "", AutoButtonColor = false, Parent = panel})
@@ -1092,7 +1097,7 @@ function Library:CreateWindow(cfg)
         sw.MouseButton1Click:Connect(function() OpenPicker(opts.Color, function(c) opts.Color = c sw.BackgroundColor3 = c end) end)
 
         local function pbtn(text, x, w, filled, fn)
-            local b = New("TextButton", {Position = UDim2.fromOffset(x, 208), Size = UDim2.fromOffset(w, 40), BackgroundColor3 = T.Accent, BackgroundTransparency = filled and 0.1 or 0.85, Text = text, Font = Font.GothamBold, TextSize = 12, TextColor3 = filled and BLACK or T.Accent, TextWrapped = true, AutoButtonColor = false, Parent = panel})
+            local b = New("TextButton", {Position = UDim2.fromOffset(x, 208), Size = UDim2.fromOffset(w, 40), BackgroundColor3 = T.Accent, BackgroundTransparency = filled and 0.1 or 0.75, Text = text, Font = Font.GothamBold, TextSize = 12, TextColor3 = filled and BLACK or T.Text, TextWrapped = true, AutoButtonColor = false, Parent = panel})
             Corner(b, 8)
             Stroke(b, T.Accent, 1.2, 0.3)
             local bs = New("UIScale", {Parent = b})
@@ -1104,7 +1109,8 @@ function Library:CreateWindow(cfg)
         pbtn("Exit + Add Button", 152, 124, true, function() close() Window:SpawnFloat(info, opts) Window:SetVisible(false) end) -- with floating button
     end
 
-    -- Floating button. For toggles it behaves as a toggle and pulses like a heartbeat while ON.
+    -- Floating button (no X). It is removed from the mini "-" button inside the UI.
+    -- For toggles it behaves as a toggle and pulses like a heartbeat while ON.
     function Window:SpawnFloat(info, o)
         if Window.Floats[info] then Window.Floats[info]:Destroy() end
         local base = o.Size
@@ -1117,10 +1123,8 @@ function Library:CreateWindow(cfg)
         New("TextLabel", {BackgroundTransparency = 1, Position = UDim2.fromScale(0, info.Toggle and -0.08 or 0), Size = UDim2.fromScale(1, 1), Font = Font.GothamBold, Text = o.Name, TextSize = 12, TextColor3 = WHITE, TextWrapped = true, Parent = b})
         local stateL
         if info.Toggle then
-            stateL = New("TextLabel", {AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -4), Size = UDim2.new(1, 0, 0, 12), BackgroundTransparency = 1, Font = Font.GothamBlack, Text = "OFF", TextSize = 10, TextColor3 = Color3.fromRGB(140, 145, 142), Parent = b})
+            stateL = New("TextLabel", {AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -4), Size = UDim2.new(1, 0, 0, 12), BackgroundTransparency = 1, Font = Font.GothamBlack, Text = "OFF", TextSize = 10, TextColor3 = Color3.fromRGB(170, 175, 172), Parent = b})
         end
-        local x = New("TextButton", {AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 4, 0, -4), Size = UDim2.fromOffset(16, 16), BackgroundColor3 = Color3.fromRGB(230, 60, 60), Text = "x", Font = Font.GothamBold, TextSize = 10, TextColor3 = WHITE, AutoButtonColor = false, ZIndex = 5, Parent = b})
-        Corner(x, 8)
 
         local alive, on, pulsing = true, false, false
         local function pulse()
@@ -1147,7 +1151,7 @@ function Library:CreateWindow(cfg)
                 Tween(b, 0.3, {BackgroundColor3 = state and o.Color:Lerp(BLACK, 0.55) or T.Dark})
                 if stateL then
                     stateL.Text = state and "ON" or "OFF"
-                    Tween(stateL, 0.3, {TextColor3 = state and o.Color:Lerp(WHITE, 0.4) or Color3.fromRGB(140, 145, 142)})
+                    Tween(stateL, 0.3, {TextColor3 = state and o.Color:Lerp(WHITE, 0.4) or Color3.fromRGB(170, 175, 172)})
                 end
                 if state then pulse() end
             end)
@@ -1162,7 +1166,6 @@ function Library:CreateWindow(cfg)
             Tween(sc, 0.25, {Scale = 0}, Enum.EasingStyle.Back, Enum.EasingDirection.In)
             Debris:AddItem(b, 0.3)
         end
-        x.MouseButton1Click:Connect(function() obj:Destroy() end)
         dragObj = Draggable(b, b, {Speed = 10, OnBegin = function() Tween(sc, 0.15, {Scale = 0.9}) end, OnEnd = function(m)
             Tween(sc, 0.4, {Scale = 1}, Enum.EasingStyle.Back)
             if m < 8 then
@@ -1177,17 +1180,17 @@ function Library:CreateWindow(cfg)
     local function Elements(Tab, scroll)
         local function Base(topH, name, desc, rightRes)
             rightRes = rightRes or 110
-            local f = New("Frame", {Size = UDim2.new(1, -4, 0, topH), BackgroundColor3 = T.Elem, BackgroundTransparency = 0.4, BorderSizePixel = 0, ClipsDescendants = true, Parent = scroll})
+            local f = New("Frame", {Size = UDim2.new(1, -4, 0, topH), BackgroundColor3 = T.Elem, BackgroundTransparency = 0.1, BorderSizePixel = 0, ClipsDescendants = true, Parent = scroll})
             Corner(f, 9)
-            local st = New("UIStroke", {Color = T.Accent, Thickness = 1, Transparency = 0.8, Parent = f})
+            local st = New("UIStroke", {Color = T.Accent, Thickness = 1, Transparency = 0.45, Parent = f})
             local sc = New("UIScale", {Name = "EScale", Scale = 0.85, Parent = f})
             Reg(function() f.BackgroundColor3 = T.Elem st.Color = T.Accent end)
             New("TextLabel", {BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, desc and 6 or 0), Size = UDim2.new(1, -rightRes, 0, desc and 20 or topH), Font = Font.GothamBold, Text = name, TextColor3 = T.Text, TextSize = 13, TextXAlignment = Left, TextTruncate = Enum.TextTruncate.AtEnd, Parent = f})
             if desc then
                 New("TextLabel", {BackgroundTransparency = 1, Position = UDim2.new(0, 12, 0, 26), Size = UDim2.new(1, -rightRes, 0, 16), Font = Font.Gotham, Text = desc, TextColor3 = T.Sub, TextSize = 11, TextXAlignment = Left, TextTruncate = Enum.TextTruncate.AtEnd, Parent = f})
             end
-            f.MouseEnter:Connect(function() Tween(st, 0.25, {Transparency = 0.35}) Tween(f, 0.25, {BackgroundTransparency = 0.25}) end)
-            f.MouseLeave:Connect(function() Tween(st, 0.3, {Transparency = 0.8}) Tween(f, 0.3, {BackgroundTransparency = 0.4}) end)
+            f.MouseEnter:Connect(function() Tween(st, 0.25, {Transparency = 0}) Tween(f, 0.25, {BackgroundTransparency = 0}) end)
+            f.MouseLeave:Connect(function() Tween(st, 0.3, {Transparency = 0.45}) Tween(f, 0.3, {BackgroundTransparency = 0.1}) end)
             Tween(sc, 0.5, {Scale = 1}, Enum.EasingStyle.Back)
             return f, sc
         end
@@ -1199,20 +1202,32 @@ function Library:CreateWindow(cfg)
             btn.MouseLeave:Connect(up)
         end
 
-        -- optional small square button (left of the control) that opens the floating-button panel
+        -- Small square button: "+" opens the floating-button panel, "-" removes the existing floating button.
         local function Mini(f, rightX, cy, info)
-            local m = New("TextButton", {AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -rightX, 0, cy), Size = UDim2.fromOffset(24, 24), BackgroundColor3 = T.Accent, BackgroundTransparency = 0.88, Text = "+", Font = Font.GothamBold, TextSize = 16, TextColor3 = T.Accent, AutoButtonColor = false, ZIndex = 5, Parent = f})
+            local m = New("TextButton", {AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -rightX, 0, cy), Size = UDim2.fromOffset(24, 24), BackgroundColor3 = T.Accent, BackgroundTransparency = 0.75, Text = "+", Font = Font.GothamBold, TextSize = 16, TextColor3 = T.Accent, AutoButtonColor = false, ZIndex = 5, Parent = f})
             Corner(m, 6)
-            local ms = New("UIStroke", {Color = T.Accent, Thickness = 1.5, Transparency = 0.2, Parent = m})
+            local ms = New("UIStroke", {Color = T.Accent, Thickness = 1.5, Transparency = 0.1, Parent = m})
             Reg(function() m.TextColor3 = T.Accent m.BackgroundColor3 = T.Accent ms.Color = T.Accent end)
-            m.MouseEnter:Connect(function() Tween(m, 0.25, {BackgroundTransparency = 0.7, Rotation = 90}, Enum.EasingStyle.Back) end)
-            m.MouseLeave:Connect(function() Tween(m, 0.3, {BackgroundTransparency = 0.88, Rotation = 0}) end)
-            m.MouseButton1Click:Connect(function() OpenFloatPanel(info) end)
+            m.MouseEnter:Connect(function() Tween(m, 0.25, {BackgroundTransparency = 0.5, Rotation = 90}, Enum.EasingStyle.Back) end)
+            m.MouseLeave:Connect(function() Tween(m, 0.3, {BackgroundTransparency = 0.75, Rotation = 0}) end)
+            WConn(RS.Heartbeat, function()
+                local t = Window.Floats[info] and "-" or "+"
+                if m.Text ~= t then m.Text = t end
+            end)
+            m.MouseButton1Click:Connect(function()
+                local ex = Window.Floats[info]
+                if ex then
+                    ex:Destroy()
+                    Library:Notify({Title = "Floating Button", Message = "Removed", Time = 2, Color = "Red"})
+                else
+                    OpenFloatPanel(info)
+                end
+            end)
         end
 
         local function FocusFx(box, st)
             box.Focused:Connect(function() Tween(st, 0.2, {Transparency = 0, Thickness = 2}) end)
-            box.FocusLost:Connect(function() Tween(st, 0.25, {Transparency = 0.6, Thickness = 1}) end)
+            box.FocusLost:Connect(function() Tween(st, 0.25, {Transparency = 0.4, Thickness = 1}) end)
         end
 
         local function Flag(c, obj) if c.Flag then Window.Flags[c.Flag] = obj end end
@@ -1243,18 +1258,18 @@ function Library:CreateWindow(cfg)
         function Tab:Note(c)
             c = c or {}
             local col = Library.ResolveColor(c.Color or "Yellow")
-            local f = New("Frame", {Size = UDim2.new(1, -4, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = col, BackgroundTransparency = 0.88, BorderSizePixel = 0, ClipsDescendants = true, Parent = scroll})
+            local f = New("Frame", {Size = UDim2.new(1, -4, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundColor3 = col, BackgroundTransparency = 0.78, BorderSizePixel = 0, ClipsDescendants = true, Parent = scroll})
             Corner(f, 9)
-            local st = Stroke(f, col, 1, 0.55)
+            local st = Stroke(f, col, 1, 0.35)
             New("UIScale", {Name = "EScale", Parent = f})
             local bar = New("Frame", {Size = UDim2.new(0, 4, 1, 0), BackgroundColor3 = col, BorderSizePixel = 0, Parent = f})
             local inner = New("Frame", {Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = f})
             New("UIListLayout", {Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder, Parent = inner})
             New("UIPadding", {PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 10), PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 9), Parent = inner})
             local tl = New("TextLabel", {LayoutOrder = 1, Size = UDim2.new(1, 0, 0, 14), BackgroundTransparency = 1, Font = Font.GothamBlack, Text = string.upper(c.Title or "NOTE"), TextSize = 11, TextColor3 = col, TextXAlignment = Left, Parent = inner})
-            local bl = New("TextLabel", {LayoutOrder = 2, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Font = Font.Gotham, Text = c.Text or "", TextSize = 12, TextColor3 = Color3.fromRGB(215, 222, 218), TextXAlignment = Left, TextWrapped = true, Parent = inner})
-            TS:Create(st, TweenInfo.new(1.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Transparency = 0.9}):Play()
-            TS:Create(bar, TweenInfo.new(1.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {BackgroundTransparency = 0.5}):Play()
+            local bl = New("TextLabel", {LayoutOrder = 2, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Font = Font.Gotham, Text = c.Text or "", TextSize = 12, TextColor3 = Color3.fromRGB(235, 240, 237), TextXAlignment = Left, TextWrapped = true, Parent = inner})
+            TS:Create(st, TweenInfo.new(1.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Transparency = 0.8}):Play()
+            TS:Create(bar, TweenInfo.new(1.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {BackgroundTransparency = 0.4}):Play()
             local obj = {}
             function obj:SetText(s) bl.Text = s end
             function obj:SetTitle(s) tl.Text = string.upper(s) end
@@ -1351,9 +1366,9 @@ function Library:CreateWindow(cfg)
             c = c or {}
             local topH = c.Desc and 50 or 40
             local f = Base(topH, c.Name or "Textbox", c.Desc, 190)
-            local box = New("TextBox", {AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0, topH / 2), Size = UDim2.fromOffset(160, 26), BackgroundColor3 = T.Dark, BackgroundTransparency = 0.3, Text = c.Default or "", PlaceholderText = c.Placeholder or "Type here...", PlaceholderColor3 = T.Sub, TextColor3 = T.Text, Font = Font.GothamMedium, TextSize = 12, ClearTextOnFocus = false, ClipsDescendants = true, Parent = f})
+            local box = New("TextBox", {AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0, topH / 2), Size = UDim2.fromOffset(160, 26), BackgroundColor3 = T.Dark, BackgroundTransparency = 0.1, Text = c.Default or "", PlaceholderText = c.Placeholder or "Type here...", PlaceholderColor3 = T.Sub, TextColor3 = T.Text, Font = Font.GothamMedium, TextSize = 12, ClearTextOnFocus = false, ClipsDescendants = true, Parent = f})
             Corner(box, 6)
-            local st = New("UIStroke", {Color = T.Accent, Thickness = 1, Transparency = 0.6, Parent = box})
+            local st = New("UIStroke", {Color = T.Accent, Thickness = 1, Transparency = 0.4, Parent = box})
             Reg(function() st.Color = T.Accent end)
             FocusFx(box, st)
             box.FocusLost:Connect(function(enter)
@@ -1429,16 +1444,16 @@ function Library:CreateWindow(cfg)
                 list.Size = UDim2.new(1, -16, 0, lh)
                 return y + lh + 8
             end
-            box = New("TextBox", {Size = UDim2.new(1, -16, 0, 26), BackgroundColor3 = T.Dark, BackgroundTransparency = 0.3, PlaceholderText = "Search...", PlaceholderColor3 = T.Sub, Text = "", TextColor3 = T.Text, Font = Font.Gotham, TextSize = 12, ClearTextOnFocus = false, Visible = false, Parent = f})
+            box = New("TextBox", {Size = UDim2.new(1, -16, 0, 26), BackgroundColor3 = T.Dark, BackgroundTransparency = 0.1, PlaceholderText = "Search...", PlaceholderColor3 = T.Sub, Text = "", TextColor3 = T.Text, Font = Font.Gotham, TextSize = 12, ClearTextOnFocus = false, Visible = false, Parent = f})
             Corner(box, 6)
-            local bst2 = New("UIStroke", {Color = T.Accent, Thickness = 1, Transparency = 0.6, Parent = box})
+            local bst2 = New("UIStroke", {Color = T.Accent, Thickness = 1, Transparency = 0.4, Parent = box})
             FocusFx(box, bst2)
 
             local function isSel(o) if multi then return sel[o] == true end return cur == o end
             local function paint()
                 for o, b in pairs(items) do
                     local s = isSel(o)
-                    Tween(b, 0.2, {BackgroundTransparency = s and 0.7 or 1, TextColor3 = s and T.Accent or T.Text})
+                    Tween(b, 0.2, {BackgroundTransparency = s and 0.55 or 1, TextColor3 = s and T.Accent or T.Text})
                 end
             end
             local function updateVal()
@@ -1468,7 +1483,7 @@ function Library:CreateWindow(cfg)
                         Corner(b, 6)
                         New("UIPadding", {PaddingLeft = UDim.new(0, 10), Parent = b})
                         items[o] = b
-                        b.MouseEnter:Connect(function() if not isSel(o) then Tween(b, 0.15, {BackgroundTransparency = 0.88}) end end)
+                        b.MouseEnter:Connect(function() if not isSel(o) then Tween(b, 0.15, {BackgroundTransparency = 0.8}) end end)
                         b.MouseLeave:Connect(function() if not isSel(o) then Tween(b, 0.2, {BackgroundTransparency = 1}) end end)
                         b.MouseButton1Click:Connect(function()
                             if multi then sel[o] = (not sel[o]) or nil else cur = o end
@@ -1559,7 +1574,7 @@ function Library:CreateWindow(cfg)
         tab.Page.GroupTransparency = 1
         tab.Page.Visible = true
         Tween(tab.Page, 0.5, {GroupTransparency = 0, Position = UDim2.new()}, Enum.EasingStyle.Back)
-        Tween(selector, 0.3, {BackgroundTransparency = 0.82})
+        Tween(selector, 0.3, {BackgroundTransparency = 0.5})
         moveSelector(tab, false)
         Tween(tab.Lbl, 0.25, {TextColor3 = T.Text})
         Tween(tab.Ic, 0.25, {ImageColor3 = T.Accent})
@@ -1700,7 +1715,7 @@ end
 local Window = Library:CreateWindow({
     Name = "VOX HUB",
     Description = "5D Glass UI  |  Premium Script Hub",
-    Transparency = 0.15,
+    Transparency = 0.05,
     Color = WINDOW_COLOR,
     Icon = "home",
     Size = UDim2.new(0, 550, 0, 356),
@@ -1725,7 +1740,7 @@ Library:Notify({Title = "VOX HUB", Message = "Loaded successfully!", Time = 4, P
 -- Main tab
 local Main = Window:Tab({Name = "Main", Icon = "home"})
 Main:Label({Text = "Welcome, " .. LP.DisplayName, Color = "Green", Bold = true, Size = 14})
-Main:Note({Title = "Note", Text = "Use the + button next to a Button or Toggle to create a floating shortcut. A floating toggle pulses like a heartbeat while it is ON.", Color = "Yellow"})
+Main:Note({Title = "Note", Text = "Use the + button next to a Button or Toggle to create a floating shortcut. Press it again (it turns into -) to remove the floating button. A floating toggle pulses like a heartbeat while it is ON.", Color = "Yellow"})
 Main:Section("Buttons")
 Main:Button({Name = "Say Hello", Desc = "Button with the mini floating-button option", Callback = function()
     Library:Notify({Title = "Hello", Message = "Button pressed!", Time = 3, Position = "BottomRight"})
@@ -1777,7 +1792,7 @@ Configs:ConfigManager()
 local Settings = Window:Tab({Name = "Settings", Icon = "settings"})
 Settings:Section("Window")
 Settings:Dropdown({Name = "Window Color", Desc = "30 color names", Options = Library.ColorNames, Default = WINDOW_COLOR, Flag = "WindowColor", Callback = function(v) Window:SetColor(v) end})
-Settings:Slider({Name = "Transparency", Min = 0, Max = 0.9, Default = 0.15, Increment = 0.05, Flag = "WindowTransparency", Callback = function(v) Window:SetTransparency(v) end})
+Settings:Slider({Name = "Transparency", Min = 0, Max = 0.9, Default = 0.05, Increment = 0.05, Flag = "WindowTransparency", Callback = function(v) Window:SetTransparency(v) end})
 Settings:Section("Notify")
 Settings:Button({Name = "Test Notify", Desc = "The progress bar finishes, then the notification closes", MiniButton = false, Callback = function()
     Library:Notify({Title = "Test", Message = "This notification has a timer bar.", Time = 5, Position = "TopRight", Icon = "settings"})
