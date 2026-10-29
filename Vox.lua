@@ -1692,19 +1692,34 @@ local function PlayIntro(accent)
     end)
     finished.Event:Wait()
 end
+function Library:CreateWindow(config)
+    local windowObj = {}
+    
+    -- (هنا تكون الأكواد الخاصة بإنشاء الواجهة والتصميم داخل المكتبة)
+    
+    -- دوال النافذة الأساسية لتجنب أي أخطاء أخرى:
+    function windowObj:Tab(data)
+        -- دالة التبويب
+        return {
+            Section = function() end,
+            Button = function() end,
+            Toggle = function() end,
+            Slider = function() end,
+            Dropdown = function() end,
+            Label = function() end,
+            Note = function() end,
+            ColorPicker = function() end,
+            Textbox = function() end,
+            ConfigManager = function() end
+        }
+    end
+    
+    function windowObj:SetColor(color) end
+    function windowObj:SetTransparency(trans) end
+    function windowObj:Tag(tagData) end
 
--- أضف هذه الدوال الفارغة في ملف المكتبة لتجنب خطأ البحث عن الإعدادات
-function Library:LoadAutoConfig()
-    -- دالة فارغة لتجنب الخطأ
+    return windowObj
 end
 
-function Library:SaveAutoConfig()
-    -- دالة فارغة لتجنب الخطأ
-end
-
-function Library:ConfigManager()
-    -- دالة فارغة لتجنب الخطأ
-end
-
-
+-- وتأكد أن هذا السطر هو الأخير تماماً في ملف المكتبة:
 return Library
