@@ -281,7 +281,7 @@ for _, s in ipairs(Library.SoundList) do
     Library.SoundMap[s[1]] = s[2]
     table.insert(Library.SoundNames, s[1])
 end
-Library.ClickSound = "pop"
+Library.ClickSound = "UI Click 1"
 Library.SoundVolume = 0.6
 Library.SoundEnabled = true
 
